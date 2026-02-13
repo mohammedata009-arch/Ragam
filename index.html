@@ -2,37 +2,49 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>تطبيق محمد طه - مولد أرقام VCF</title>
+    <title>تطبيق محمد طه - مولد الأسماء الذكي</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #e5ddd5; text-align: center; }
-        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); max-width: 600px; margin: auto; }
-        button { padding: 12px; margin: 5px; width: 45%; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; color: white; }
-        .btn-vcf { background: #007bff; width: 93%; }
-        .btn-gen { background: #25D366; }
+        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; text-align: center; }
+        .container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
+        h2 { color: #075e54; margin-bottom: 5px; }
+        .dev-name { color: #555; font-size: 14px; margin-bottom: 20px; }
+        input, select { padding: 12px; margin: 10px 0; width: 95%; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box; }
+        .btn-group { display: flex; flex-wrap: wrap; justify-content: space-between; }
+        button { padding: 15px; margin: 5px 0; width: 48%; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; color: white; font-size: 14px; }
+        .btn-gen { background: #25D366; width: 100%; margin-bottom: 10px; }
+        .btn-vcf { background: #007bff; width: 100%; }
         .btn-excel { background: #1D6F42; }
-        input, select { padding: 12px; margin: 10px; width: 90%; border-radius: 8px; border: 1px solid #ccc; }
+        .btn-copy { background: #333; }
         table { width: 100%; margin-top: 20px; border-collapse: collapse; }
-        th, td { border: 1px solid #ddd; padding: 8px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background: #075e54; color: white; }
+        .wa-link { color: #25D366; font-weight: bold; text-decoration: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>مولد أرقام السودان (VCF) 🇸🇩</h2>
-    <p>بواسطة: محمد طه عطا المنان</p>
+    <h2>مولد أرقام السودان 🇸🇩</h2>
+    <div class="dev-name">المطور: محمد طه عطا المنان</div>
     
     <select id="network">
-        <option value="+24991">زين (91)</option>
+        <option value="+24991">زين السودان (91)</option>
         <option value="+24912">سوداني (12)</option>
         <option value="+24992">أرويدو (92)</option>
     </select>
 
-    <input type="number" id="count" placeholder="كم عدد الأرقام؟">
+    <input type="text" id="contactName" placeholder="اكتب الاسم هنا (مثلاً: زبون)">
+    <input type="number" id="count" placeholder="كم عدد الأرقام المراد توليدها؟">
     
-    <button class="btn-gen" onclick="generateNumbers()">توليد الأرقام</button>
-    <button class="btn-excel" onclick="exportToExcel()">ملف Excel</button>
-    <button class="btn-vcf" onclick="exportToVCF()">تحميل ملف جهات الاتصال (VCF)</button>
+    <button class="btn-gen" onclick="generateNumbers()">1. توليد الأرقام</button>
+    
+    <div class="btn-group">
+        <button class="btn-excel" onclick="exportToExcel()">تحميل Excel</button>
+        <button class="btn-copy" onclick="copyNumbers()">نسخ الأرقام</button>
+    </div>
+    
+    <button class="btn-vcf" onclick="exportToVCF()">2. تحميل ملف الأسماء (VCF) للهاتف</button>
 
     <div id="tableContainer"></div>
 </div>
@@ -44,38 +56,53 @@
         const prefix = document.getElementById('network').value;
         const count = document.getElementById('count').value;
         const container = document.getElementById('tableContainer');
+        
+        if (!count || count <= 0) { alert("الرجاء تحديد عدد الأرقام"); return; }
+        
         currentNumbers = [];
-        let html = "<table><tr><th>الرقم</th><th>واتساب</th></tr>";
+        let html = "<table><tr><th>الرقم</th><th>اختبار</th></tr>";
 
         for (let i = 0; i < count; i++) {
             const num = prefix + Math.floor(1000000 + Math.random() * 8999999);
             currentNumbers.push(num);
-            html += `<tr><td>${num}</td><td><a href="https://wa.me/${num}">دردشة</a></td></tr>`;
+            html += `<tr><td>${num}</td><td><a href="https://wa.me/${num}" target="_blank" class="wa-link">دردشة</a></td></tr>`;
         }
         container.innerHTML = html + "</table>";
     }
 
     function exportToVCF() {
-        if (currentNumbers.length === 0) return alert("ولد الأرقام أولاً");
+        const baseName = document.getElementById('contactName').value || "سوداني";
+        if (currentNumbers.length === 0) { alert("يجب توليد الأرقام أولاً"); return; }
+        
         let vcfContent = "";
         currentNumbers.forEach((num, index) => {
-            vcfContent += `BEGIN:VCARD\nVERSION:3.0\nFN:سوداني ${index + 1}\nTEL;TYPE=CELL:${num}\nEND:VCARD\n`;
+            // هنا يتم إضافة الاسم الذي اخترته مع الرقم التسلسلي
+            vcfContent += `BEGIN:VCARD\nVERSION:3.0\nFN:${baseName} ${index + 1}\nTEL;TYPE=CELL:${num}\nEND:VCARD\n`;
         });
         
-        const blob = new Blob([vcfContent], { type: "text/vcf" });
+        const blob = new Blob([vcfContent], { type: "text/vcard" });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "Sudan_Contacts_Taha.vcf";
+        a.download = `${baseName}_contacts.vcf`;
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
     }
 
     function exportToExcel() {
-        const data = currentNumbers.map(n => ({ "الرقم": n }));
+        if (currentNumbers.length === 0) return alert("ولد الأرقام أولاً");
+        const data = currentNumbers.map(n => ({ "رقم الهاتف": n }));
         const ws = XLSX.utils.json_to_sheet(data);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Numbers");
-        XLSX.writeFile(workbook, "Sudan_Numbers.xlsx");
+        XLSX.writeFile(wb, "Sudan_Numbers.xlsx");
+    }
+
+    function copyNumbers() {
+        if (currentNumbers.length === 0) return;
+        navigator.clipboard.writeText(currentNumbers.join("\n"));
+        alert("تم نسخ الأرقام");
     }
 </script>
 </body>
